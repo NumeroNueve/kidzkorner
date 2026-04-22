@@ -78,6 +78,11 @@ struct StorySetupView: View {
     @State private var currentIndex = 0
     @State private var navigateToPlayback = false
     @State private var promptSpeaker = AVSpeechSynthesizer()
+    @State private var customAnimal = ""
+    @State private var customPlace = ""
+    @State private var customFood = ""
+    @State private var customColor = ""
+    @State private var customSound = ""
 
     private var characterStore = UserCharacterStore.shared
     @State private var showingAddCharacter = false
@@ -317,24 +322,24 @@ struct StorySetupView: View {
     // MARK: - Emoji grid cards (animal, place, food)
 
     private var animalCard: some View {
-        emojiGridCard(index: 1, choices: animalChoices, value: inputs.animal) {
+        emojiGridCard(index: 1, choices: animalChoices, value: inputs.animal, customText: $customAnimal) {
             inputs.animal = $0
         }
     }
 
     private var placeCard: some View {
-        emojiGridCard(index: 2, choices: placeChoices, value: inputs.place) {
+        emojiGridCard(index: 2, choices: placeChoices, value: inputs.place, customText: $customPlace) {
             inputs.place = $0
         }
     }
 
     private var foodCard: some View {
-        emojiGridCard(index: 3, choices: foodChoices, value: inputs.food) {
+        emojiGridCard(index: 3, choices: foodChoices, value: inputs.food, customText: $customFood) {
             inputs.food = $0
         }
     }
 
-    private func emojiGridCard(index: Int, choices: [EmojiChoice], value: String, onSelect: @escaping (String) -> Void) -> some View {
+    private func emojiGridCard(index: Int, choices: [EmojiChoice], value: String, customText: Binding<String>, onSelect: @escaping (String) -> Void) -> some View {
         VStack(spacing: 20) {
             cardHeader(index: index)
 
@@ -342,6 +347,7 @@ struct StorySetupView: View {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(choices) { choice in
                     Button {
+                        customText.wrappedValue = ""
                         onSelect(choice.label)
                     } label: {
                         VStack(spacing: 6) {
@@ -354,19 +360,40 @@ struct StorySetupView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                         .background(
-                            value == choice.label ? Color.green : Color.white.opacity(0.15),
+                            value == choice.label && customText.wrappedValue.isEmpty ? Color.green : Color.white.opacity(0.15),
                             in: RoundedRectangle(cornerRadius: 16)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(value == choice.label ? Color.green : Color.clear, lineWidth: 3)
+                                .stroke(value == choice.label && customText.wrappedValue.isEmpty ? Color.green : Color.clear, lineWidth: 3)
                         )
                     }
                 }
             }
             .padding(.horizontal, 24)
+
+            customInputField(text: customText, placeholder: cardLabels[index], onCommit: onSelect)
         }
         .padding()
+    }
+
+    private func customInputField(text: Binding<String>, placeholder: String, onCommit: @escaping (String) -> Void) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "pencil")
+                .foregroundStyle(.white.opacity(0.6))
+            TextField("Or type your own...", text: text)
+                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .foregroundStyle(.white)
+                .onChange(of: text.wrappedValue) { _, newValue in
+                    let trimmed = newValue.trimmingCharacters(in: .whitespaces)
+                    if !trimmed.isEmpty {
+                        onCommit(trimmed)
+                    }
+                }
+        }
+        .padding(12)
+        .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 24)
     }
 
     // MARK: - Color card
@@ -379,6 +406,7 @@ struct StorySetupView: View {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(colorChoices) { choice in
                     Button {
+                        customColor = ""
                         inputs.color = choice.label
                     } label: {
                         Text(choice.label)
@@ -392,14 +420,18 @@ struct StorySetupView: View {
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(inputs.color == choice.label ? Color.white : Color.clear, lineWidth: 4)
+                                    .stroke(inputs.color == choice.label && customColor.isEmpty ? Color.white : Color.clear, lineWidth: 4)
                             )
-                            .shadow(color: inputs.color == choice.label ? choice.color.opacity(0.7) : .clear,
+                            .shadow(color: inputs.color == choice.label && customColor.isEmpty ? choice.color.opacity(0.7) : .clear,
                                     radius: 10)
                     }
                 }
             }
             .padding(.horizontal, 24)
+
+            customInputField(text: $customColor, placeholder: "Favorite Color") {
+                inputs.color = $0
+            }
         }
         .padding()
     }
@@ -414,6 +446,7 @@ struct StorySetupView: View {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(soundChoices) { choice in
                     Button {
+                        customSound = ""
                         inputs.sillySound = choice.label
                         speakSound(choice.label)
                     } label: {
@@ -427,17 +460,21 @@ struct StorySetupView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(
-                            inputs.sillySound == choice.label ? Color.green : Color.white.opacity(0.15),
+                            inputs.sillySound == choice.label && customSound.isEmpty ? Color.green : Color.white.opacity(0.15),
                             in: RoundedRectangle(cornerRadius: 16)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(inputs.sillySound == choice.label ? Color.green : Color.clear, lineWidth: 3)
+                                .stroke(inputs.sillySound == choice.label && customSound.isEmpty ? Color.green : Color.clear, lineWidth: 3)
                         )
                     }
                 }
             }
             .padding(.horizontal, 24)
+
+            customInputField(text: $customSound, placeholder: "Silly Sound") {
+                inputs.sillySound = $0
+            }
         }
         .padding()
     }

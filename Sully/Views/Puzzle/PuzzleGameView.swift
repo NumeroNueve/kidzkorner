@@ -2,12 +2,12 @@ import SwiftUI
 
 struct PuzzleGameView: View {
     let puzzleImage: PuzzleImage
+    let gridSize: Int
+    let pieceShape: PieceShape
     @State private var pieces: [PuzzlePiece] = []
     @State private var selectedPieceID: UUID?
     @State private var showCelebration = false
     @State private var referenceImage: UIImage?
-
-    private let gridSize = 3
 
     var body: some View {
         ZStack {
@@ -236,7 +236,16 @@ struct PuzzleGameView: View {
                     height: tileSize
                 )
                 if let tileCG = squareImage.cgImage?.cropping(to: tileRect) {
-                    let tileImage = UIImage(cgImage: tileCG)
+                    let tileImage: UIImage
+                    if pieceShape == .jigsaw {
+                        tileImage = applyJigsawMask(
+                            to: UIImage(cgImage: tileCG),
+                            row: row, col: col,
+                            gridSize: gridSize
+                        )
+                    } else {
+                        tileImage = UIImage(cgImage: tileCG)
+                    }
                     newPieces.append(PuzzlePiece(
                         correctRow: row,
                         correctCol: col,
@@ -248,6 +257,85 @@ struct PuzzleGameView: View {
         }
 
         pieces = newPieces.shuffled()
+    }
+
+    private func applyJigsawMask(to image: UIImage, row: Int, col: Int, gridSize: Int) -> UIImage {
+        let size = image.size
+        let tabSize: CGFloat = size.width * 0.18
+        let expandedSize = CGSize(width: size.width + tabSize * 2, height: size.height + tabSize * 2)
+
+        let renderer = UIGraphicsImageRenderer(size: expandedSize)
+        return renderer.image { ctx in
+            let context = ctx.cgContext
+            let center = CGRect(x: tabSize, y: tabSize, width: size.width, height: size.height)
+
+            let path = UIBezierPath()
+            let tabRadius = tabSize * 0.5
+
+            // Top edge
+            path.move(to: CGPoint(x: center.minX, y: center.minY))
+            if row > 0 {
+                let mid = center.minX + size.width / 2
+                path.addLine(to: CGPoint(x: mid - tabRadius, y: center.minY))
+                path.addArc(
+                    withCenter: CGPoint(x: mid, y: center.minY),
+                    radius: tabRadius,
+                    startAngle: .pi, endAngle: 0, clockwise: (row + col) % 2 == 0
+                )
+                path.addLine(to: CGPoint(x: center.maxX, y: center.minY))
+            } else {
+                path.addLine(to: CGPoint(x: center.maxX, y: center.minY))
+            }
+
+            // Right edge
+            if col < gridSize - 1 {
+                let mid = center.minY + size.height / 2
+                path.addLine(to: CGPoint(x: center.maxX, y: mid - tabRadius))
+                path.addArc(
+                    withCenter: CGPoint(x: center.maxX, y: mid),
+                    radius: tabRadius,
+                    startAngle: -.pi / 2, endAngle: .pi / 2, clockwise: (row + col) % 2 == 0
+                )
+                path.addLine(to: CGPoint(x: center.maxX, y: center.maxY))
+            } else {
+                path.addLine(to: CGPoint(x: center.maxX, y: center.maxY))
+            }
+
+            // Bottom edge
+            if row < gridSize - 1 {
+                let mid = center.minX + size.width / 2
+                path.addLine(to: CGPoint(x: mid + tabRadius, y: center.maxY))
+                path.addArc(
+                    withCenter: CGPoint(x: mid, y: center.maxY),
+                    radius: tabRadius,
+                    startAngle: 0, endAngle: .pi, clockwise: (row + col) % 2 == 0
+                )
+                path.addLine(to: CGPoint(x: center.minX, y: center.maxY))
+            } else {
+                path.addLine(to: CGPoint(x: center.minX, y: center.maxY))
+            }
+
+            // Left edge
+            if col > 0 {
+                let mid = center.minY + size.height / 2
+                path.addLine(to: CGPoint(x: center.minX, y: mid + tabRadius))
+                path.addArc(
+                    withCenter: CGPoint(x: center.minX, y: mid),
+                    radius: tabRadius,
+                    startAngle: .pi / 2, endAngle: -.pi / 2, clockwise: (row + col) % 2 == 0
+                )
+                path.addLine(to: CGPoint(x: center.minX, y: center.minY))
+            } else {
+                path.addLine(to: CGPoint(x: center.minX, y: center.minY))
+            }
+
+            path.close()
+
+            context.addPath(path.cgPath)
+            context.clip()
+
+            image.draw(in: center)
+        }
     }
 
     private func generatePlaceholderImage(for name: String) -> UIImage {

@@ -36,7 +36,7 @@ struct PuzzlePickerView: View {
                         ) {
                             ForEach(allImages) { puzzleImage in
                                 NavigationLink {
-                                    PuzzleGameView(puzzleImage: puzzleImage)
+                                    PuzzleSetupView(puzzleImage: puzzleImage)
                                 } label: {
                                     puzzleThumbnail(puzzleImage, width: tileWidth)
                                 }
