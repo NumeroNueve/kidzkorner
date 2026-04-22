@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct HomeView: View {
+    @State private var showSettings = false
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -67,6 +69,27 @@ struct HomeView: View {
                 }
                 .padding(.horizontal, 40)
                 .padding(.vertical)
+
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 24))
+                                .foregroundStyle(.white.opacity(0.8))
+                                .padding(12)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.top, 8)
+                .padding(.trailing, 16)
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
             }
         }
     }

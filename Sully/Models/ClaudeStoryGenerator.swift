@@ -11,8 +11,8 @@ struct ClaudeStoryGenerator {
     private static let apiURL = URL(string: "https://api.anthropic.com/v1/messages")!
 
     static func generateStory(inputs: StoryInputs) async throws -> (title: String, text: String) {
-        guard let apiKey = Bundle.main.infoDictionary?["AnthropicAPIKey"] as? String,
-              !apiKey.isEmpty, apiKey != "your-api-key-here" else {
+        guard let apiKey = KeychainHelper.read(key: "anthropic_api_key"),
+              !apiKey.isEmpty else {
             throw StoryGenerationError.missingAPIKey
         }
 

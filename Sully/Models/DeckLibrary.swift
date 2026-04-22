@@ -1,43 +1,10 @@
 import Foundation
 
 enum DeckLibrary {
-    static let familyDeck = MatchingDeck(
-        name: "Family",
-        icon: "👨‍👩‍👦",
-        thumbnailImage: "family_photo",
-        pairs: [
-            .init(pairID: "adam", imageName: "family_adam", emoji: nil, label: "Adam"),
-            .init(pairID: "alex", imageName: "family_alex", emoji: nil, label: "Alex"),
-            .init(pairID: "caelan", imageName: "family_caelan", emoji: nil, label: "Caelan"),
-            .init(pairID: "craig", imageName: "family_craig", emoji: nil, label: "Ye Ye"),
-            .init(pairID: "emily", imageName: "family_emily", emoji: nil, label: "Emily"),
-            .init(pairID: "finn", imageName: "family_finn", emoji: nil, label: "Finn"),
-            .init(pairID: "leslie", imageName: "family_leslie", emoji: nil, label: "Leslie"),
-            .init(pairID: "lori", imageName: "family_lori", emoji: nil, label: "Nai Nai"),
-            .init(pairID: "mallory", imageName: "family_mallory", emoji: nil, label: "Mallory"),
-            .init(pairID: "megan", imageName: "family_megan", emoji: nil, label: "Megan"),
-            .init(pairID: "retta", imageName: "family_retta", emoji: nil, label: "Gigi"),
-            .init(pairID: "simmy", imageName: "family_simmy", emoji: nil, label: "Simmy"),
-            .init(pairID: "sully", imageName: "family_sully", emoji: nil, label: "Sully"),
-            .init(pairID: "taylor", imageName: "family_taylor", emoji: nil, label: "Dada"),
-            .init(pairID: "mama", imageName: "family_mama", emoji: nil, label: "Mama"),
-            .init(pairID: "kelly", imageName: "family_kelly", emoji: nil, label: "Kelly"),
-            .init(pairID: "peter", imageName: "family_peter", emoji: nil, label: "Peter"),
-            .init(pairID: "betty", imageName: "family_betty", emoji: nil, label: "Betty"),
-            .init(pairID: "danny", imageName: "family_danny", emoji: nil, label: "Danny"),
-            .init(pairID: "george", imageName: "family_george", emoji: nil, label: "George"),
-            .init(pairID: "heidi", imageName: "family_heidi", emoji: nil, label: "Heidi"),
-            .init(pairID: "james", imageName: "family_james", emoji: nil, label: "James"),
-            .init(pairID: "molly", imageName: "family_molly", emoji: nil, label: "Momo"),
-            .init(pairID: "penny", imageName: "family_penny", emoji: nil, label: "Penny"),
-            .init(pairID: "rami", imageName: "family_rami", emoji: nil, label: "Rami"),
-        ]
-    )
-
     static let seaCreaturesDeck = MatchingDeck(
         name: "Sea Creatures",
         icon: "🦈",
-        thumbnailImage: nil,
+        thumbnailImage: "sea_shark",
         pairs: [
             .init(pairID: "shark", imageName: "sea_shark", emoji: nil, label: "Shark"),
             .init(pairID: "turtle", imageName: "sea_turtle", emoji: nil, label: "Turtle"),
@@ -55,7 +22,7 @@ enum DeckLibrary {
     static let monsterTrucksDeck = MatchingDeck(
         name: "Monster Trucks",
         icon: "🛻",
-        thumbnailImage: nil,
+        thumbnailImage: "mt_bluflame",
         pairs: [
             .init(pairID: "blueflame", imageName: "mt_bluflame", emoji: nil, label: "Blue Flame"),
             .init(pairID: "swamp", imageName: "mt_swamp", emoji: nil, label: "Swamp Crusher"),
@@ -105,10 +72,7 @@ enum DeckLibrary {
     )
 
     static let puzzleImages: [PuzzleImage] = [
-        PuzzleImage(name: "Lightning McQueen", imageName: "puzzle_lightning"),
         PuzzleImage(name: "Whale Shark", imageName: "puzzle_whaleshark"),
-        PuzzleImage(name: "Frozen", imageName: "puzzle_frozen"),
-        PuzzleImage(name: "Grave Digger", imageName: "puzzle_gravedigger"),
         PuzzleImage(name: "Megalodon", imageName: "puzzle_megalodon"),
         PuzzleImage(name: "Great White Shark", imageName: "puzzle_greatwhite"),
         PuzzleImage(name: "Hammerhead Shark", imageName: "puzzle_hammerhead"),

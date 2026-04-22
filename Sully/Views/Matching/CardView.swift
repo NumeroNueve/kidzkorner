@@ -12,7 +12,16 @@ struct CardView: View {
                         .shadow(radius: 2)
 
                     VStack(spacing: 2) {
-                        if let imageName = card.imageName {
+                        if let uiImage = card.userImage {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: geo.size.width - 12, height: geo.size.height * 0.7)
+                                .clipped()
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .padding(.top, 6)
+                                .padding(.horizontal, 6)
+                        } else if let imageName = card.imageName {
                             Image(imageName)
                                 .resizable()
                                 .scaledToFill()

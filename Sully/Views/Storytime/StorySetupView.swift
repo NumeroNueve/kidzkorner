@@ -1,18 +1,6 @@
 import SwiftUI
 import AVFoundation
-
-struct HeroOption: Identifiable {
-    let id = UUID()
-    let name: String
-    let imageName: String
-}
-
-private let heroOptions: [HeroOption] = [
-    HeroOption(name: "Sully", imageName: "family_sully"),
-    HeroOption(name: "Simmy", imageName: "family_simmy"),
-    HeroOption(name: "Mama", imageName: "family_mama"),
-    HeroOption(name: "Dada", imageName: "family_taylor"),
-]
+import PhotosUI
 
 struct EmojiChoice: Identifiable {
     let id = UUID()
@@ -90,6 +78,12 @@ struct StorySetupView: View {
     @State private var currentIndex = 0
     @State private var navigateToPlayback = false
     @State private var promptSpeaker = AVSpeechSynthesizer()
+
+    private var characterStore = UserCharacterStore.shared
+    @State private var showingAddCharacter = false
+    @State private var newCharacterName = ""
+    @State private var selectedCharacterPhoto: PhotosPickerItem?
+    @State private var pendingCharacterImage: UIImage?
 
     private var allFilled: Bool {
         !inputs.heroName.isEmpty && !inputs.animal.isEmpty &&
@@ -206,35 +200,118 @@ struct StorySetupView: View {
         VStack(spacing: 20) {
             cardHeader(index: 0)
 
-            HStack(spacing: 16) {
-                ForEach(heroOptions) { hero in
-                    Button {
-                        inputs.heroName = hero.name
-                    } label: {
-                        VStack(spacing: 8) {
-                            Image(hero.imageName)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 70, height: 70)
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle()
-                                        .stroke(inputs.heroName == hero.name ? Color.green : Color.white.opacity(0.3),
-                                                lineWidth: inputs.heroName == hero.name ? 4 : 2)
-                                )
-                                .shadow(color: inputs.heroName == hero.name ? .green.opacity(0.6) : .clear,
-                                        radius: 8)
+            if characterStore.characters.isEmpty {
+                VStack(spacing: 16) {
+                    Text("Add your first character!")
+                        .font(.system(size: 20, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.8))
 
-                            Text(hero.name)
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                                .foregroundStyle(inputs.heroName == hero.name ? .green : .white)
+                    addCharacterButton
+                }
+                .padding(.horizontal, 24)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        ForEach(characterStore.characters) { character in
+                            Button {
+                                inputs.heroName = character.name
+                            } label: {
+                                characterBubble(character)
+                            }
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    if inputs.heroName == character.name {
+                                        inputs.heroName = ""
+                                    }
+                                    characterStore.deleteCharacter(id: character.id)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
+
+                        addCharacterButton
                     }
+                    .padding(.horizontal, 24)
                 }
             }
-            .padding(.horizontal, 24)
         }
         .padding()
+        .onChange(of: selectedCharacterPhoto) { _, newValue in
+            guard let item = newValue else { return }
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
+                    pendingCharacterImage = image
+                }
+                selectedCharacterPhoto = nil
+                newCharacterName = ""
+                showingAddCharacter = true
+            }
+        }
+        .alert("Name Your Character", isPresented: $showingAddCharacter) {
+            TextField("Character name", text: $newCharacterName)
+            Button("Add") {
+                let name = newCharacterName.trimmingCharacters(in: .whitespaces)
+                guard !name.isEmpty else { return }
+                characterStore.addCharacter(name: name, image: pendingCharacterImage)
+                inputs.heroName = name
+                pendingCharacterImage = nil
+            }
+            Button("Cancel", role: .cancel) {
+                pendingCharacterImage = nil
+            }
+        }
+    }
+
+    private func characterBubble(_ character: SavedCharacter) -> some View {
+        let isSelected = inputs.heroName == character.name
+        return VStack(spacing: 8) {
+            Group {
+                if let filename = character.imageFilename,
+                   let uiImage = characterStore.loadImage(filename: filename) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Text(String(character.name.prefix(1)).uppercased())
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.purple.opacity(0.5))
+                }
+            }
+            .frame(width: 70, height: 70)
+            .clipShape(Circle())
+            .overlay(
+                Circle()
+                    .stroke(isSelected ? Color.green : Color.white.opacity(0.3),
+                            lineWidth: isSelected ? 4 : 2)
+            )
+            .shadow(color: isSelected ? .green.opacity(0.6) : .clear, radius: 8)
+
+            Text(character.name)
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundStyle(isSelected ? .green : .white)
+        }
+    }
+
+    private var addCharacterButton: some View {
+        PhotosPicker(selection: $selectedCharacterPhoto, matching: .images) {
+            VStack(spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.15))
+                        .frame(width: 70, height: 70)
+                    Image(systemName: "plus")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.8))
+                }
+                Text("Add")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+        }
     }
 
     // MARK: - Emoji grid cards (animal, place, food)

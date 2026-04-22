@@ -1,7 +1,12 @@
 import SwiftUI
 
 struct MatchingDeckPickerView: View {
-    private let decks = [DeckLibrary.familyDeck, DeckLibrary.seaCreaturesDeck, DeckLibrary.monsterTrucksDeck, DeckLibrary.dinosaursDeck, DeckLibrary.jungleAnimalsDeck]
+    private let builtInDecks = [DeckLibrary.seaCreaturesDeck, DeckLibrary.monsterTrucksDeck, DeckLibrary.dinosaursDeck, DeckLibrary.jungleAnimalsDeck]
+    private var userStore = UserDeckStore.shared
+
+    private var allDecks: [MatchingDeck] {
+        builtInDecks + userStore.decks.map { userStore.toMatchingDeck($0) }
+    }
 
     var body: some View {
         ZStack {
@@ -26,9 +31,11 @@ struct MatchingDeckPickerView: View {
                             columns: Array(repeating: GridItem(.fixed(tileWidth), spacing: spacing), count: columns),
                             spacing: spacing
                         ) {
-                            ForEach(decks) { deck in
+                            ForEach(allDecks) { deck in
                                 deckTile(deck: deck, width: tileWidth, imageHeight: imageHeight, tileHeight: tileHeight)
                             }
+
+                            createDeckTile(width: tileWidth, imageHeight: imageHeight, tileHeight: tileHeight)
                         }
                         .padding(.horizontal, spacing)
                     }
@@ -62,6 +69,33 @@ struct MatchingDeckPickerView: View {
             .foregroundStyle(.primary)
             .frame(width: width, height: tileHeight)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24))
+        }
+        .contextMenu {
+            if let entry = userStore.decks.first(where: { $0.name == deck.name }) {
+                Button(role: .destructive) {
+                    userStore.deleteDeck(id: entry.id)
+                } label: {
+                    Label("Delete Deck", systemImage: "trash")
+                }
+            }
+        }
+    }
+
+    private func createDeckTile(width: CGFloat, imageHeight: CGFloat, tileHeight: CGFloat) -> some View {
+        NavigationLink {
+            DeckCreatorView()
+        } label: {
+            VStack(spacing: 8) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: min(imageHeight * 0.5, 60)))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .frame(height: imageHeight)
+                Text("Create Your Own")
+                    .font(.system(size: min(width * 0.09, 22), weight: .semibold, design: .rounded))
+            }
+            .foregroundStyle(.white.opacity(0.8))
+            .frame(width: width, height: tileHeight)
+            .background(Color.white.opacity(0.15), in: RoundedRectangle(cornerRadius: 24))
         }
     }
 }
