@@ -79,9 +79,9 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    Text("Anthropic API Key")
+                    Text("Anthropic API Key (Optional)")
                 } footer: {
-                    Text("Enter your Anthropic API key to enable AI-generated stories. Without a key, stories use fun built-in templates.")
+                    Text("AI stories work out of the box. Add your own Anthropic API key here if you'd like to use your own account instead.")
                 }
             }
             .navigationTitle("Settings")
