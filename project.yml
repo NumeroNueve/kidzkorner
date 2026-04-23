@@ -14,6 +14,7 @@ targets:
       path: Sully/Info.plist
       properties:
         NSPhotoLibraryUsageDescription: Kidz Korner needs access to your photo library to create custom matching cards, puzzles, and story characters.
+        NSCameraUsageDescription: Kidz Korner uses the camera so you can take selfies for your story characters!
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.wolfe.kidzkorner

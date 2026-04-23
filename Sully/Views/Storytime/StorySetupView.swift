@@ -78,6 +78,7 @@ struct StorySetupView: View {
     @State private var newCharacterName = ""
     @State private var selectedCharacterPhoto: PhotosPickerItem?
     @State private var pendingCharacterImage: UIImage?
+    @State private var showCamera = false
 
     private var allFilled: Bool {
         !inputs.heroName.isEmpty && !inputs.animal.isEmpty &&
@@ -263,19 +264,47 @@ struct StorySetupView: View {
     }
 
     private var addCharacterButton: some View {
-        PhotosPicker(selection: $selectedCharacterPhoto, matching: .images) {
-            VStack(spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.15))
-                        .frame(width: 70, height: 70)
-                    Image(systemName: "plus")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.8))
+        HStack(spacing: 16) {
+            Button {
+                showCamera = true
+            } label: {
+                VStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.15))
+                            .frame(width: 70, height: 70)
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 26, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+                    Text("Selfie")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.6))
                 }
-                Text("Add")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
+            }
+            .fullScreenCover(isPresented: $showCamera) {
+                CameraPicker { image in
+                    pendingCharacterImage = image
+                    newCharacterName = ""
+                    showingAddCharacter = true
+                }
+                .ignoresSafeArea()
+            }
+
+            PhotosPicker(selection: $selectedCharacterPhoto, matching: .images) {
+                VStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.15))
+                            .frame(width: 70, height: 70)
+                        Image(systemName: "photo.on.rectangle")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+                    Text("Photos")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.6))
+                }
             }
         }
     }
