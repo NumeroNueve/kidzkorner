@@ -71,12 +71,5 @@ enum DeckLibrary {
         ]
     )
 
-    static let puzzleImages: [PuzzleImage] = [
-        PuzzleImage(name: "Whale Shark", imageName: "puzzle_whaleshark"),
-        PuzzleImage(name: "Megalodon", imageName: "puzzle_megalodon"),
-        PuzzleImage(name: "Great White Shark", imageName: "puzzle_greatwhite"),
-        PuzzleImage(name: "Hammerhead Shark", imageName: "puzzle_hammerhead"),
-        PuzzleImage(name: "T-Rex", imageName: "puzzle_trex"),
-        PuzzleImage(name: "Dinosaurs", imageName: "puzzle_dinosaurs"),
-    ]
+    static let puzzleImages: [PuzzleImage] = []
 }

@@ -4,12 +4,34 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var apiKeyText = ""
     @State private var hasKey = false
+    @AppStorage("playerName") private var playerName = ""
+    @State private var editingName = ""
 
     private static let keychainKey = "anthropic_api_key"
 
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    TextField("Your name", text: $editingName)
+                        .font(.system(size: 18, design: .rounded))
+                        .onSubmit {
+                            let trimmed = editingName.trimmingCharacters(in: .whitespaces)
+                            if !trimmed.isEmpty { playerName = trimmed }
+                        }
+                    Button {
+                        let trimmed = editingName.trimmingCharacters(in: .whitespaces)
+                        if !trimmed.isEmpty { playerName = trimmed }
+                    } label: {
+                        Text("Update Name")
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .disabled(editingName.trimmingCharacters(in: .whitespaces).isEmpty)
+                } header: {
+                    Text("Player Name")
+                }
+
                 Section {
                     HStack(spacing: 12) {
                         if hasKey {
@@ -71,6 +93,7 @@ struct SettingsView: View {
             }
             .onAppear {
                 hasKey = KeychainHelper.read(key: Self.keychainKey) != nil
+                editingName = playerName
             }
         }
     }

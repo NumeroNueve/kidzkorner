@@ -1,5 +1,4 @@
 import SwiftUI
-import AVFoundation
 import PhotosUI
 
 struct EmojiChoice: Identifiable {
@@ -61,15 +60,6 @@ private let soundChoices: [SoundChoice] = [
     SoundChoice(label: "Zip-zap!"),
 ]
 
-private let spokenQuestions: [String] = [
-    "Who is the hero of our story?",
-    "What animal friend should join the adventure?",
-    "Where should the adventure take place?",
-    "What yummy food should be in the story?",
-    "What's your favorite color?",
-    "Pick a silly sound!",
-]
-
 private let cardEmojis = ["🦸", "🐾", "📍", "🍕", "🎨", "🔊"]
 private let cardLabels = ["Hero Name", "Animal Friend", "Fun Place", "Yummy Food", "Favorite Color", "Silly Sound"]
 
@@ -77,7 +67,6 @@ struct StorySetupView: View {
     @State private var inputs = StoryInputs()
     @State private var currentIndex = 0
     @State private var navigateToPlayback = false
-    @State private var promptSpeaker = AVSpeechSynthesizer()
     @State private var customAnimal = ""
     @State private var customPlace = ""
     @State private var customFood = ""
@@ -129,34 +118,6 @@ struct StorySetupView: View {
         .navigationTitle("Storytime")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color(red: 0.2, green: 0.1, blue: 0.4), for: .navigationBar)
-        .onAppear {
-            speakQuestion(at: 0)
-        }
-        .onChange(of: currentIndex) { _, newIndex in
-            speakQuestion(at: newIndex)
-        }
-        .onDisappear {
-            promptSpeaker.stopSpeaking(at: .immediate)
-        }
-    }
-
-    private func speakQuestion(at index: Int) {
-        promptSpeaker.stopSpeaking(at: .immediate)
-        let utterance = AVSpeechUtterance(string: spokenQuestions[index])
-        utterance.voice = VoiceHelper.preferredVoice
-        utterance.rate = 0.45
-        utterance.pitchMultiplier = 1.15
-        utterance.preUtteranceDelay = 0.4
-        promptSpeaker.speak(utterance)
-    }
-
-    private func speakSound(_ text: String) {
-        promptSpeaker.stopSpeaking(at: .immediate)
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = VoiceHelper.preferredVoice
-        utterance.rate = 0.4
-        utterance.pitchMultiplier = 1.3
-        promptSpeaker.speak(utterance)
     }
 
     // MARK: - Progress
@@ -448,7 +409,6 @@ struct StorySetupView: View {
                     Button {
                         customSound = ""
                         inputs.sillySound = choice.label
-                        speakSound(choice.label)
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "speaker.wave.2.fill")
@@ -505,7 +465,6 @@ struct StorySetupView: View {
                 }
             } else if allFilled {
                 Button {
-                    promptSpeaker.stopSpeaking(at: .immediate)
                     navigateToPlayback = true
                 } label: {
                     HStack(spacing: 10) {

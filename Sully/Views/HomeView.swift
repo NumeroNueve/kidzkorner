@@ -2,6 +2,9 @@ import SwiftUI
 
 struct HomeView: View {
     @State private var showSettings = false
+    @AppStorage("playerName") private var playerName = ""
+    @State private var showNamePrompt = false
+    @State private var nameInput = ""
 
     var body: some View {
         NavigationStack {
@@ -14,7 +17,7 @@ struct HomeView: View {
                 VStack(spacing: 20) {
                     Spacer()
 
-                    Text("Sully's Games")
+                    Text(playerName.isEmpty ? "My Games" : "\(playerName)'s Games")
                         .font(.system(size: 42, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
@@ -90,6 +93,23 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
+            }
+            .alert("What's your name?", isPresented: $showNamePrompt) {
+                TextField("Your name", text: $nameInput)
+                Button("Let's Play!") {
+                    let trimmed = nameInput.trimmingCharacters(in: .whitespaces)
+                    if !trimmed.isEmpty {
+                        playerName = trimmed
+                    }
+                }
+            } message: {
+                Text("We'll personalize your games!")
+            }
+            .onAppear {
+                if playerName.isEmpty {
+                    nameInput = ""
+                    showNamePrompt = true
+                }
             }
         }
     }

@@ -41,12 +41,10 @@ struct PuzzlePickerView: View {
                                     puzzleThumbnail(puzzleImage, width: tileWidth)
                                 }
                                 .contextMenu {
-                                    if puzzleImage.userImageFilename != nil {
-                                        Button(role: .destructive) {
-                                            removeUserPuzzle(puzzleImage)
-                                        } label: {
-                                            Label("Delete Puzzle", systemImage: "trash")
-                                        }
+                                    Button(role: .destructive) {
+                                        removeUserPuzzle(puzzleImage)
+                                    } label: {
+                                        Label("Delete Puzzle", systemImage: "trash")
                                     }
                                 }
                             }
