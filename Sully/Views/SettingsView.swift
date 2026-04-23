@@ -2,16 +2,41 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var apiKeyText = ""
-    @State private var hasKey = false
     @AppStorage("playerName") private var playerName = ""
     @State private var editingName = ""
+    @State private var showSubscription = false
+    @State private var showParentalGate = false
 
-    private static let keychainKey = "anthropic_api_key"
+    private var sub = SubscriptionManager.shared
 
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(sub.tier == .free ? "Free Plan" : sub.tier == .storyteller ? "Storyteller" : "Unlimited")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                            Text("\(sub.voicedStoriesRemaining) voiced stories remaining")
+                                .font(.system(size: 14, design: .rounded))
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button {
+                            showParentalGate = true
+                        } label: {
+                            Text(sub.tier == .free ? "Upgrade" : "Manage")
+                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(.purple.gradient, in: Capsule())
+                        }
+                    }
+                } header: {
+                    Text("Subscription")
+                }
+
                 Section {
                     TextField("Your name", text: $editingName)
                         .font(.system(size: 18, design: .rounded))
@@ -31,58 +56,6 @@ struct SettingsView: View {
                 } header: {
                     Text("Player Name")
                 }
-
-                Section {
-                    HStack(spacing: 12) {
-                        if hasKey {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                                .font(.system(size: 22))
-                            Text("API Key Saved")
-                                .font(.system(size: 16, weight: .medium, design: .rounded))
-                        } else {
-                            Image(systemName: "key.fill")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 22))
-                            Text("No Key Configured")
-                                .font(.system(size: 16, weight: .medium, design: .rounded))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    SecureField("sk-ant-...", text: $apiKeyText)
-                        .font(.system(size: 16, design: .monospaced))
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-
-                    Button {
-                        let trimmed = apiKeyText.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !trimmed.isEmpty else { return }
-                        KeychainHelper.save(key: Self.keychainKey, value: trimmed)
-                        apiKeyText = ""
-                        hasKey = true
-                    } label: {
-                        Text("Save Key")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .frame(maxWidth: .infinity)
-                    }
-                    .disabled(apiKeyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                    if hasKey {
-                        Button(role: .destructive) {
-                            KeychainHelper.delete(key: Self.keychainKey)
-                            hasKey = false
-                        } label: {
-                            Text("Remove Key")
-                                .font(.system(size: 16, weight: .medium, design: .rounded))
-                                .frame(maxWidth: .infinity)
-                        }
-                    }
-                } header: {
-                    Text("Anthropic API Key (Optional)")
-                } footer: {
-                    Text("AI stories work out of the box. Add your own Anthropic API key here if you'd like to use your own account instead.")
-                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -92,8 +65,15 @@ struct SettingsView: View {
                 }
             }
             .onAppear {
-                hasKey = KeychainHelper.read(key: Self.keychainKey) != nil
                 editingName = playerName
+            }
+            .fullScreenCover(isPresented: $showParentalGate) {
+                ParentalGateView {
+                    showSubscription = true
+                }
+            }
+            .sheet(isPresented: $showSubscription) {
+                SubscriptionView()
             }
         }
     }

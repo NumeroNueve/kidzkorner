@@ -8,19 +8,9 @@ enum StoryGenerationError: Error {
 }
 
 struct ClaudeStoryGenerator {
-    private static let apiURL = URL(string: "https://api.anthropic.com/v1/messages")!
-
-    private static var builtInKey: String {
-        let d: [UInt8] = [0xc0, 0xd8, 0x9e, 0xd2, 0xdd, 0xc7, 0x9e, 0xd2, 0xc3, 0xda, 0x83, 0x80, 0x9e, 0x84, 0xe3, 0xc9, 0xf5, 0xda, 0xe0, 0xc1, 0xc1, 0xc0, 0xea, 0xda, 0xf1, 0xcb, 0xdc, 0xdb, 0xc6, 0xf7, 0xfb, 0xda, 0xf5, 0xdb, 0xf5, 0xeb, 0xc3, 0xe3, 0xd6, 0xc4, 0xf2, 0xc4, 0x85, 0xd2, 0xcb, 0xec, 0xff, 0xe0, 0xff, 0xe6, 0xec, 0xe9, 0xfd, 0xd6, 0x9e, 0xca, 0xd7, 0x84, 0xc7, 0x82, 0xc4, 0xd5, 0xdc, 0xc5, 0xe6, 0xf1, 0xd6, 0xf9, 0x8a, 0xc6, 0xc4, 0xd5, 0xd7, 0x84, 0x9e, 0xf6, 0xe3, 0xc0, 0x86, 0x82, 0xf4, 0xdb, 0xc3, 0xec, 0xdd, 0xda, 0xd7, 0xc4, 0xf6, 0x80, 0x9e, 0xc7, 0xde, 0xd4, 0xe5, 0xde, 0xd4, 0xca, 0xc4, 0x9e, 0xde, 0xeb, 0xde, 0xdd, 0xc1, 0xc4, 0xf2, 0xf2]
-        return String(bytes: d.map { $0 ^ 0xb3 }, encoding: .utf8) ?? ""
-    }
+    private static let proxyURL = URL(string: "\(APIConfig.proxyBaseURL)/api/story")!
 
     static func generateStory(inputs: StoryInputs) async throws -> (title: String, text: String) {
-        let apiKey = KeychainHelper.read(key: "anthropic_api_key") ?? builtInKey
-        guard !apiKey.isEmpty else {
-            throw StoryGenerationError.missingAPIKey
-        }
-
         let clean = ContentFilter.sanitizeInputs(inputs)
 
         let systemPrompt = """
@@ -59,16 +49,20 @@ struct ClaudeStoryGenerator {
         let body: [String: Any] = [
             "model": "claude-sonnet-4-20250514",
             "max_tokens": 1500,
-            "system": systemPrompt,
+            "system": [
+                [
+                    "type": "text",
+                    "text": systemPrompt,
+                    "cache_control": ["type": "ephemeral"]
+                ]
+            ],
             "messages": [
                 ["role": "user", "content": userMessage]
             ]
         ]
 
-        var request = URLRequest(url: apiURL)
+        var request = URLRequest(url: proxyURL)
         request.httpMethod = "POST"
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "content-type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         request.timeoutInterval = 30

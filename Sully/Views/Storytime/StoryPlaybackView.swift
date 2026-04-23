@@ -9,10 +9,24 @@ enum StoryState {
 
 struct StoryPlaybackView: View {
     let inputs: StoryInputs
+    private let savedStory: SavedStory?
+
+    init(inputs: StoryInputs) {
+        self.inputs = inputs
+        self.savedStory = nil
+    }
+
+    init(savedStory: SavedStory) {
+        self.inputs = savedStory.inputs
+        self.savedStory = savedStory
+    }
 
     @State private var storyState: StoryState = .loading
     @State private var speaker = StorySpeaker()
     @State private var showCelebration = false
+    @State private var isSaved = false
+    @State private var showSubscription = false
+    @State private var showParentalGate = false
     @Environment(\.dismiss) private var dismiss
 
     private var storyTitle: String {
@@ -51,6 +65,9 @@ struct StoryPlaybackView: View {
             if isReady {
                 VStack(spacing: 0) {
                     titleSection
+                    if storyAudioData == nil && savedStory == nil {
+                        voiceUpgradeBanner
+                    }
                     storyScroll
                     controls
                 }
@@ -86,16 +103,31 @@ struct StoryPlaybackView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color(red: 0.1, green: 0.1, blue: 0.3), for: .navigationBar)
         .task {
-            await loadStory()
+            if let saved = savedStory {
+                let audioData = saved.audioFilename.flatMap { StoryStore.shared.loadAudio(filename: $0) }
+                storyState = .ready(title: saved.title, text: saved.text, audioData: audioData)
+                isSaved = true
+            } else {
+                await loadStory()
+            }
         }
         .onDisappear {
             speaker.stop()
+        }
+        .fullScreenCover(isPresented: $showParentalGate) {
+            ParentalGateView {
+                showSubscription = true
+            }
+        }
+        .sheet(isPresented: $showSubscription) {
+            SubscriptionView()
         }
     }
 
     private func loadStory() async {
         storyState = .loading
         speaker.stop()
+        isSaved = false
 
         var title: String
         var text: String
@@ -116,16 +148,38 @@ struct StoryPlaybackView: View {
             text = template.build(inputs)
         }
 
-        storyState = .generatingVoice(title: title, text: text)
-
+        let sub = SubscriptionManager.shared
         var audioData: Data?
-        do {
-            audioData = try await ElevenLabsTTS.synthesize(text: text)
-        } catch {
-            // Will fall back to Apple TTS on playback
+
+        if sub.canUseVoicedStory {
+            storyState = .generatingVoice(title: title, text: text)
+            do {
+                audioData = try await ElevenLabsTTS.synthesize(text: text)
+                sub.recordVoicedStory()
+            } catch {
+                // Will fall back to Apple TTS on playback
+            }
         }
 
         storyState = .ready(title: title, text: text, audioData: audioData)
+    }
+
+    private var voiceUpgradeBanner: some View {
+        Button {
+            showParentalGate = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "wand.and.stars")
+                    .font(.system(size: 14))
+                Text("Upgrade for premium narrator voice")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+            }
+            .foregroundStyle(.yellow.opacity(0.9))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(.yellow.opacity(0.12), in: Capsule())
+        }
+        .padding(.bottom, 4)
     }
 
     private var titleSection: some View {
@@ -156,18 +210,41 @@ struct StoryPlaybackView: View {
     }
 
     private var controls: some View {
-        HStack(spacing: 24) {
+        HStack(spacing: 16) {
             Button {
                 Task { await loadStory() }
             } label: {
                 VStack(spacing: 4) {
                     Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
-                        .font(.system(size: 28))
+                        .font(.system(size: 24))
                     Text("New Story")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
                 }
                 .foregroundStyle(.white.opacity(0.8))
-                .frame(width: 80)
+                .frame(width: 64)
+            }
+
+            Button {
+                guard !isSaved else { return }
+                _ = StoryStore.shared.saveStory(
+                    title: storyTitle,
+                    text: storyText,
+                    inputs: inputs,
+                    audioData: storyAudioData
+                )
+                withAnimation(.spring(duration: 0.4)) {
+                    isSaved = true
+                }
+            } label: {
+                VStack(spacing: 4) {
+                    Image(systemName: isSaved ? "heart.fill" : "heart")
+                        .font(.system(size: 24))
+                        .foregroundStyle(isSaved ? .pink : .white.opacity(0.8))
+                    Text(isSaved ? "Saved!" : "Save")
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                }
+                .foregroundStyle(isSaved ? .pink : .white.opacity(0.8))
+                .frame(width: 64)
             }
 
             Button {
@@ -194,12 +271,12 @@ struct StoryPlaybackView: View {
 
             VStack(spacing: 4) {
                 Image(systemName: "tortoise.fill")
-                    .font(.system(size: 28))
+                    .font(.system(size: 24))
                 Text(speaker.isSlowMode ? "Slow" : "Normal")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
             }
             .foregroundStyle(speaker.isSlowMode ? .yellow : .white.opacity(0.8))
-            .frame(width: 80)
+            .frame(width: 64)
             .onTapGesture {
                 speaker.toggleSpeed()
             }

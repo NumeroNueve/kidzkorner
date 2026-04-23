@@ -18,5 +18,9 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Kidz Korner uses the camera so you can take selfies for your story characters!</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Kidz Korner needs access to your photo library to create custom matching cards, puzzles, and story characters.</string>
 </dict>
 </plist>

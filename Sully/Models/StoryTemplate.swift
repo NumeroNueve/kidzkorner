@@ -1,6 +1,6 @@
 import Foundation
 
-struct StoryInputs {
+struct StoryInputs: Codable {
     var heroName: String = ""
     var animal: String = ""
     var place: String = ""

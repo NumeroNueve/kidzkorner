@@ -33,6 +33,7 @@ private let placeChoices: [EmojiChoice] = [
     EmojiChoice(label: "A Castle", emoji: "🏰"),
     EmojiChoice(label: "The Jungle", emoji: "🌴"),
     EmojiChoice(label: "The Park", emoji: "🎡"),
+    EmojiChoice(label: "Outer Space", emoji: "🚀"),
 ]
 
 private let foodChoices: [EmojiChoice] = [
@@ -41,6 +42,7 @@ private let foodChoices: [EmojiChoice] = [
     EmojiChoice(label: "Ice Cream", emoji: "🍦"),
     EmojiChoice(label: "Cookies", emoji: "🍪"),
     EmojiChoice(label: "Pancakes", emoji: "🥞"),
+    EmojiChoice(label: "Spaghetti", emoji: "🍝"),
 ]
 
 private let colorChoices: [ColorChoice] = [
@@ -58,6 +60,7 @@ private let soundChoices: [SoundChoice] = [
     SoundChoice(label: "Whoosh!"),
     SoundChoice(label: "Kaboom!"),
     SoundChoice(label: "Zip-zap!"),
+    SoundChoice(label: "Woo-hoo!"),
 ]
 
 private let cardEmojis = ["🦸", "🐾", "📍", "🍕", "🎨", "🔊"]
@@ -121,6 +124,16 @@ struct StorySetupView: View {
         .navigationTitle("Storytime")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color(red: 0.2, green: 0.1, blue: 0.4), for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    StoryLibraryView()
+                } label: {
+                    Image(systemName: "books.vertical.fill")
+                        .foregroundStyle(.white.opacity(0.8))
+                }
+            }
+        }
     }
 
     // MARK: - Progress
@@ -470,14 +483,21 @@ struct StorySetupView: View {
     // MARK: - Bottom buttons
 
     private var bottomButtons: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 16) {
             if currentIndex > 0 {
                 Button {
                     withAnimation { currentIndex -= 1 }
                 } label: {
-                    Image(systemName: "arrow.left.circle.fill")
-                        .font(.system(size: 50))
-                        .foregroundStyle(.white.opacity(0.7))
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.left")
+                            .font(.system(size: 24, weight: .bold))
+                        Text("Back")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 16)
+                    .background(Color.white.opacity(0.2), in: Capsule())
                 }
             }
 
@@ -487,9 +507,17 @@ struct StorySetupView: View {
                 Button {
                     withAnimation { currentIndex += 1 }
                 } label: {
-                    Image(systemName: "arrow.right.circle.fill")
-                        .font(.system(size: 50))
-                        .foregroundStyle(.white.opacity(0.9))
+                    HStack(spacing: 8) {
+                        Text("Next")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 24, weight: .bold))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 16)
+                    .background(Color.blue.gradient, in: Capsule())
+                    .shadow(color: .blue.opacity(0.4), radius: 6, y: 3)
                 }
             } else if allFilled {
                 Button {
@@ -509,6 +537,6 @@ struct StorySetupView: View {
             }
         }
         .padding(.horizontal, 30)
-        .frame(height: 60)
+        .frame(height: 70)
     }
 }

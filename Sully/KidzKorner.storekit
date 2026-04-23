@@ -1,0 +1,138 @@
+{
+  "identifier" : "com.wolfe.kidzkorner",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "1",
+    "_developerTeamID" : "",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Transaction Listener"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "voicedstories",
+      "localizations" : [
+        {
+          "description" : "Premium narrator voices for AI stories",
+          "displayName" : "Voiced Stories",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "Voiced Stories",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "storyteller_001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "20 premium voiced stories per month",
+              "displayName" : "Storyteller",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.wolfe.kidzkorner.storyteller",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Storyteller",
+          "subscriptionGroupID" : "voicedstories",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "9.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "unlimited_001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "60 premium voiced stories per month",
+              "displayName" : "Unlimited",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.wolfe.kidzkorner.unlimited",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Unlimited",
+          "subscriptionGroupID" : "voicedstories",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

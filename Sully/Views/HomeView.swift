@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @State private var showSettings = false
+    @State private var showParentalGate = false
     @AppStorage("playerName") private var playerName = ""
     @State private var showNamePrompt = false
     @State private var nameInput = ""
@@ -9,10 +10,14 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Image("wallpaper")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
+                GeometryReader { geo in
+                    Image("wallpaper")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
+                }
+                .ignoresSafeArea()
 
                 VStack(spacing: 20) {
                     Spacer()
@@ -73,23 +78,25 @@ struct HomeView: View {
                 .padding(.horizontal, 40)
                 .padding(.vertical)
 
-                VStack {
-                    HStack {
-                        Spacer()
-                        Button {
-                            showSettings = true
-                        } label: {
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 24))
-                                .foregroundStyle(.white.opacity(0.8))
-                                .padding(12)
-                                .background(.ultraThinMaterial, in: Circle())
-                        }
-                    }
-                    Spacer()
+            }
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    showParentalGate = true
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(.white)
+                        .padding(14)
+                        .background(Color.black.opacity(0.45), in: Circle())
+                        .shadow(color: .black.opacity(0.4), radius: 4, y: 2)
                 }
-                .padding(.top, 8)
+                .padding(.top, 12)
                 .padding(.trailing, 16)
+            }
+            .fullScreenCover(isPresented: $showParentalGate) {
+                ParentalGateView {
+                    showSettings = true
+                }
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
