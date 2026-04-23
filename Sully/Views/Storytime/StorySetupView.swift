@@ -79,6 +79,7 @@ struct StorySetupView: View {
     @State private var selectedCharacterPhoto: PhotosPickerItem?
     @State private var pendingCharacterImage: UIImage?
     @State private var showCamera = false
+    @State private var showAddOptions = false
 
     private var allFilled: Bool {
         !inputs.heroName.isEmpty && !inputs.animal.isEmpty &&
@@ -173,17 +174,23 @@ struct StorySetupView: View {
                         .font(.system(size: 20, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.8))
 
-                    addCharacterButton
+                    addButton
                 }
                 .padding(.horizontal, 24)
             } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 16) {
+                ScrollView {
+                    let bubbleSize: CGFloat = characterStore.characters.count <= 4 ? 70 : 56
+                    let fontSize: CGFloat = characterStore.characters.count <= 4 ? 16 : 13
+                    let columns = characterStore.characters.count <= 4
+                        ? Array(repeating: GridItem(.flexible(), spacing: 12), count: min(characterStore.characters.count, 4))
+                        : Array(repeating: GridItem(.flexible(), spacing: 10), count: min(characterStore.characters.count, 5))
+
+                    LazyVGrid(columns: columns, spacing: 12) {
                         ForEach(characterStore.characters) { character in
                             Button {
                                 inputs.heroName = character.name
                             } label: {
-                                characterBubble(character)
+                                characterBubble(character, size: bubbleSize, fontSize: fontSize)
                             }
                             .contextMenu {
                                 Button(role: .destructive) {
@@ -196,11 +203,11 @@ struct StorySetupView: View {
                                 }
                             }
                         }
-
-                        addCharacterButton
                     }
                     .padding(.horizontal, 24)
                 }
+
+                addButton
             }
         }
         .padding()
@@ -229,11 +236,19 @@ struct StorySetupView: View {
                 pendingCharacterImage = nil
             }
         }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraPicker { image in
+                pendingCharacterImage = image
+                newCharacterName = ""
+                showingAddCharacter = true
+            }
+            .ignoresSafeArea()
+        }
     }
 
-    private func characterBubble(_ character: SavedCharacter) -> some View {
+    private func characterBubble(_ character: SavedCharacter, size: CGFloat, fontSize: CGFloat) -> some View {
         let isSelected = inputs.heroName == character.name
-        return VStack(spacing: 8) {
+        return VStack(spacing: 6) {
             Group {
                 if let filename = character.imageFilename,
                    let uiImage = characterStore.loadImage(filename: filename) {
@@ -242,70 +257,52 @@ struct StorySetupView: View {
                         .scaledToFill()
                 } else {
                     Text(String(character.name.prefix(1)).uppercased())
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(.system(size: size * 0.45, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Color.purple.opacity(0.5))
                 }
             }
-            .frame(width: 70, height: 70)
+            .frame(width: size, height: size)
             .clipShape(Circle())
             .overlay(
                 Circle()
                     .stroke(isSelected ? Color.green : Color.white.opacity(0.3),
-                            lineWidth: isSelected ? 4 : 2)
+                            lineWidth: isSelected ? 3 : 1.5)
             )
-            .shadow(color: isSelected ? .green.opacity(0.6) : .clear, radius: 8)
+            .shadow(color: isSelected ? .green.opacity(0.6) : .clear, radius: 6)
 
             Text(character.name)
-                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .font(.system(size: fontSize, weight: .bold, design: .rounded))
                 .foregroundStyle(isSelected ? .green : .white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
     }
 
-    private var addCharacterButton: some View {
-        HStack(spacing: 16) {
-            Button {
+    private var addButton: some View {
+        Button {
+            showAddOptions = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 20))
+                Text("Add Character")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+            }
+            .foregroundStyle(.white.opacity(0.8))
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
+            .background(Color.white.opacity(0.15), in: Capsule())
+        }
+        .confirmationDialog("Add Character", isPresented: $showAddOptions) {
+            Button("Take a Selfie") {
                 showCamera = true
-            } label: {
-                VStack(spacing: 8) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.15))
-                            .frame(width: 70, height: 70)
-                        Image(systemName: "camera.fill")
-                            .font(.system(size: 26, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.8))
-                    }
-                    Text("Selfie")
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.6))
-                }
             }
-            .fullScreenCover(isPresented: $showCamera) {
-                CameraPicker { image in
-                    pendingCharacterImage = image
-                    newCharacterName = ""
-                    showingAddCharacter = true
-                }
-                .ignoresSafeArea()
-            }
-
             PhotosPicker(selection: $selectedCharacterPhoto, matching: .images) {
-                VStack(spacing: 8) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.15))
-                            .frame(width: 70, height: 70)
-                        Image(systemName: "photo.on.rectangle")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.8))
-                    }
-                    Text("Photos")
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.6))
-                }
+                Text("Choose from Photos")
             }
+            Button("Cancel", role: .cancel) {}
         }
     }
 
