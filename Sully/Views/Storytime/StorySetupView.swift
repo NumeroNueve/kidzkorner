@@ -80,6 +80,7 @@ struct StorySetupView: View {
     @State private var pendingCharacterImage: UIImage?
     @State private var showCamera = false
     @State private var showAddOptions = false
+    @State private var showPhotoPicker = false
 
     private var allFilled: Bool {
         !inputs.heroName.isEmpty && !inputs.animal.isEmpty &&
@@ -299,11 +300,12 @@ struct StorySetupView: View {
             Button("Take a Selfie") {
                 showCamera = true
             }
-            PhotosPicker(selection: $selectedCharacterPhoto, matching: .images) {
-                Text("Choose from Photos")
+            Button("Choose from Photos") {
+                showPhotoPicker = true
             }
             Button("Cancel", role: .cancel) {}
         }
+        .photosPicker(isPresented: $showPhotoPicker, selection: $selectedCharacterPhoto, matching: .images)
     }
 
     // MARK: - Emoji grid cards (animal, place, food)
