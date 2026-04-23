@@ -55,13 +55,22 @@ struct StoryPlaybackView: View {
                     controls
                 }
             } else if isGeneratingVoice {
-                VStack(spacing: 20) {
-                    ProgressView()
-                        .scaleEffect(2)
-                        .tint(.white)
-                    Text("Getting the storyteller ready...")
-                        .font(.system(size: 22, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.8))
+                ZStack {
+                    Image("story_loading")
+                        .resizable()
+                        .scaledToFill()
+                        .ignoresSafeArea()
+                        .overlay(Color.black.opacity(0.3))
+
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .scaleEffect(2)
+                            .tint(.white)
+                        Text("Getting the storyteller ready...")
+                            .font(.system(size: 22, weight: .medium, design: .rounded))
+                            .foregroundStyle(.white)
+                            .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
+                    }
                 }
             } else {
                 StoryLoadingView()
