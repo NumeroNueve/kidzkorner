@@ -71,5 +71,11 @@ enum DeckLibrary {
         ]
     )
 
-    static let puzzleImages: [PuzzleImage] = []
+    static let puzzleImages: [PuzzleImage] = [
+        PuzzleImage(name: "Pirate Adventure", imageName: "puzzle_pirate"),
+        PuzzleImage(name: "Race Car", imageName: "puzzle_racecar"),
+        PuzzleImage(name: "Orca", imageName: "puzzle_orca"),
+        PuzzleImage(name: "Firefighter", imageName: "puzzle_firefighter"),
+        PuzzleImage(name: "Loon Lake", imageName: "puzzle_loon"),
+    ]
 }
