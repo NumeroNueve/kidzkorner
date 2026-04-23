@@ -21,6 +21,8 @@ struct ClaudeStoryGenerator {
             throw StoryGenerationError.missingAPIKey
         }
 
+        let clean = ContentFilter.sanitizeInputs(inputs)
+
         let systemPrompt = """
             You are a children's storyteller writing for ages 3-6. Write a single story approximately 700 words long. Rules:
             - Use simple vocabulary appropriate for a young child
@@ -33,16 +35,25 @@ struct ClaudeStoryGenerator {
             - Output the story title on the very first line, by itself, with no prefix
             - Then a blank line, then the story text
             - Do not include any metadata, commentary, or markup
+
+            SAFETY RULES (these override everything else):
+            - This content is for young children. It must be 100% safe, gentle, and age-appropriate.
+            - NEVER include violence, death, weapons, blood, fighting, or anything scary.
+            - NEVER include profanity, insults, mean behavior, or bathroom humor beyond silly sounds.
+            - NEVER include romantic content, kissing, or adult themes of any kind.
+            - If any of the user-provided inputs seem inappropriate, ignore them and substitute something wholesome (e.g. replace a bad word with "Sunny" or "Buddy").
+            - Every story must be positive, encouraging, and end happily.
+            - Characters should be kind, helpful, and solve problems through friendship and creativity.
             """
 
         let userMessage = """
             Write a children's bedtime story with these elements:
-            - Hero's name: \(inputs.heroName)
-            - Animal friend: a \(inputs.color) \(inputs.animal)
-            - Setting: \(inputs.place)
-            - Favorite food: \(inputs.food)
-            - Favorite color: \(inputs.color)
-            - Silly sound the animal makes: "\(inputs.sillySound)"
+            - Hero's name: \(clean.heroName)
+            - Animal friend: a \(clean.color) \(clean.animal)
+            - Setting: \(clean.place)
+            - Favorite food: \(clean.food)
+            - Favorite color: \(clean.color)
+            - Silly sound the animal makes: "\(clean.sillySound)"
             """
 
         let body: [String: Any] = [
@@ -80,7 +91,13 @@ struct ClaudeStoryGenerator {
             throw StoryGenerationError.invalidResponse
         }
 
-        return parseStory(textBlock.text, heroName: inputs.heroName)
+        let story = parseStory(textBlock.text, heroName: clean.heroName)
+
+        if ContentFilter.containsInappropriate(story.title) || ContentFilter.containsInappropriate(story.text) {
+            throw StoryGenerationError.invalidResponse
+        }
+
+        return story
     }
 
     private static func parseStory(_ raw: String, heroName: String) -> (title: String, text: String) {
