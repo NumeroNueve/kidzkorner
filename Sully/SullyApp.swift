@@ -37,7 +37,7 @@ struct SplashView: View {
                 .scaledToFill()
                 .ignoresSafeArea()
 
-            Text("Sully's Games")
+            Text("Kidz Korner")
                 .font(.system(size: 46, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .shadow(color: .black.opacity(0.5), radius: 6, y: 3)

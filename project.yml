@@ -1,4 +1,4 @@
-name: Sully
+name: KidzKorner
 options:
   bundleIdPrefix: com.wolfe
   deploymentTarget:
@@ -10,17 +10,16 @@ targets:
     platform: iOS
     sources:
       - Sully
-    configFiles:
-      Debug: Sully/Config/Secrets.xcconfig
-      Release: Sully/Config/Secrets.xcconfig
     info:
       path: Sully/Info.plist
+      properties:
+        NSPhotoLibraryUsageDescription: Kidz Korner needs access to your photo library to create custom matching cards, puzzles, and story characters.
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.wolfe.sully
+        PRODUCT_BUNDLE_IDENTIFIER: com.wolfe.kidzkorner
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
-        INFOPLIST_KEY_CFBundleDisplayName: Sully
+        INFOPLIST_KEY_CFBundleDisplayName: Kidz Korner
         SWIFT_VERSION: "5.9"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES

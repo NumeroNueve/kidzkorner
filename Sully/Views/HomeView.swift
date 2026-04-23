@@ -17,7 +17,7 @@ struct HomeView: View {
                 VStack(spacing: 20) {
                     Spacer()
 
-                    Text(playerName.isEmpty ? "My Games" : "\(playerName)'s Games")
+                    Text(playerName.isEmpty ? "Kidz Korner" : "\(playerName)'s Korner")
                         .font(.system(size: 42, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
@@ -103,7 +103,7 @@ struct HomeView: View {
                     }
                 }
             } message: {
-                Text("We'll personalize your games!")
+                Text("We'll personalize your Kidz Korner!")
             }
             .onAppear {
                 if playerName.isEmpty {

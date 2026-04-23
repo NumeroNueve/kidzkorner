@@ -3,7 +3,8 @@ import AVFoundation
 
 enum StoryState {
     case loading
-    case ready(title: String, text: String)
+    case generatingVoice(title: String, text: String)
+    case ready(title: String, text: String, audioData: Data?)
 }
 
 struct StoryPlaybackView: View {
@@ -15,17 +16,27 @@ struct StoryPlaybackView: View {
     @Environment(\.dismiss) private var dismiss
 
     private var storyTitle: String {
-        if case .ready(let title, _) = storyState { return title }
+        if case .ready(let title, _, _) = storyState { return title }
         return ""
     }
 
     private var storyText: String {
-        if case .ready(_, let text) = storyState { return text }
+        if case .ready(_, let text, _) = storyState { return text }
         return ""
+    }
+
+    private var storyAudioData: Data? {
+        if case .ready(_, _, let data) = storyState { return data }
+        return nil
     }
 
     private var isReady: Bool {
         if case .ready = storyState { return true }
+        return false
+    }
+
+    private var isGeneratingVoice: Bool {
+        if case .generatingVoice = storyState { return true }
         return false
     }
 
@@ -42,6 +53,15 @@ struct StoryPlaybackView: View {
                     titleSection
                     storyScroll
                     controls
+                }
+            } else if isGeneratingVoice {
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .scaleEffect(2)
+                        .tint(.white)
+                    Text("Getting the storyteller ready...")
+                        .font(.system(size: 22, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.8))
                 }
             } else {
                 StoryLoadingView()
@@ -68,18 +88,35 @@ struct StoryPlaybackView: View {
         storyState = .loading
         speaker.stop()
 
+        var title: String
+        var text: String
+
         if NetworkMonitor.shared.isConnected {
             do {
                 let result = try await ClaudeStoryGenerator.generateStory(inputs: inputs)
-                storyState = .ready(title: result.title, text: result.text)
-                return
+                title = result.title
+                text = result.text
             } catch {
-                // Fall through to local template
+                let template = StoryTemplate.random()
+                title = template.title
+                text = template.build(inputs)
             }
+        } else {
+            let template = StoryTemplate.random()
+            title = template.title
+            text = template.build(inputs)
         }
 
-        let template = StoryTemplate.random()
-        storyState = .ready(title: template.title, text: template.build(inputs))
+        storyState = .generatingVoice(title: title, text: text)
+
+        var audioData: Data?
+        do {
+            audioData = try await ElevenLabsTTS.synthesize(text: text)
+        } catch {
+            // Will fall back to Apple TTS on playback
+        }
+
+        storyState = .ready(title: title, text: text, audioData: audioData)
     }
 
     private var titleSection: some View {
@@ -128,7 +165,7 @@ struct StoryPlaybackView: View {
                 if speaker.isSpeaking {
                     speaker.stop()
                 } else {
-                    speaker.speak(storyText) {
+                    speaker.speak(storyText, audioData: storyAudioData) {
                         showCelebration = true
                     }
                 }
@@ -165,42 +202,83 @@ struct StoryPlaybackView: View {
 @Observable
 class StorySpeaker: NSObject, AVSpeechSynthesizerDelegate, @unchecked Sendable {
     private let synthesizer = AVSpeechSynthesizer()
+    private var audioPlayer: AVAudioPlayer?
     var isSpeaking = false
     var isSlowMode = false
     private var onFinish: (() -> Void)?
+    private var currentText: String?
+    private var usingElevenLabs = false
 
     override init() {
         super.init()
         synthesizer.delegate = self
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio)
     }
 
-    func speak(_ text: String, onFinish: @escaping () -> Void) {
+    func speak(_ text: String, audioData: Data? = nil, onFinish: @escaping () -> Void) {
         stop()
         self.onFinish = onFinish
+        self.currentText = text
+        isSpeaking = true
 
+        if let audioData = audioData {
+            playElevenLabsAudio(audioData)
+        } else {
+            speakWithApple(text)
+        }
+    }
+
+    private func playElevenLabsAudio(_ data: Data) {
+        usingElevenLabs = true
+        try? AVAudioSession.sharedInstance().setActive(true)
+        do {
+            audioPlayer = try AVAudioPlayer(data: data)
+            audioPlayer?.delegate = self
+            if isSlowMode {
+                audioPlayer?.enableRate = true
+                audioPlayer?.rate = 0.75
+            }
+            audioPlayer?.play()
+        } catch {
+            if let text = currentText {
+                speakWithApple(text)
+            }
+        }
+    }
+
+    private func speakWithApple(_ text: String) {
+        usingElevenLabs = false
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = VoiceHelper.preferredVoice
         utterance.rate = isSlowMode ? 0.35 : 0.48
         utterance.pitchMultiplier = 1.1
         utterance.preUtteranceDelay = 0.3
-
-        isSpeaking = true
         synthesizer.speak(utterance)
     }
 
     func stop() {
         synthesizer.stopSpeaking(at: .immediate)
+        audioPlayer?.stop()
+        audioPlayer = nil
         isSpeaking = false
+        currentText = nil
         onFinish = nil
     }
 
     func toggleSpeed() {
         isSlowMode.toggle()
-        if isSpeaking {
+        if isSpeaking, usingElevenLabs, let player = audioPlayer {
+            player.enableRate = true
+            player.rate = isSlowMode ? 0.75 : 1.0
+        } else if isSpeaking {
+            let text = currentText
             let wasFinish = onFinish
             stop()
-            if let finish = wasFinish {
-                onFinish = finish
+            if let text = text, let finish = wasFinish {
+                self.onFinish = finish
+                self.currentText = text
+                isSpeaking = true
+                speakWithApple(text)
             }
         }
     }
@@ -209,5 +287,15 @@ class StorySpeaker: NSObject, AVSpeechSynthesizerDelegate, @unchecked Sendable {
         isSpeaking = false
         onFinish?()
         onFinish = nil
+    }
+}
+
+extension StorySpeaker: AVAudioPlayerDelegate {
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Task { @MainActor in
+            isSpeaking = false
+            onFinish?()
+            onFinish = nil
+        }
     }
 }
